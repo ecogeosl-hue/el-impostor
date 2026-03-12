@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>EL IMPOSTOR – ECOGEO</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg: #1c1410; --teal: #5ecfbe; --cream: #f5f0e8; --red: #d42b2b; }
+    body {
+      background: var(--bg); min-height: 100dvh;
+      font-family: 'Inter', sans-serif;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      overflow: hidden; padding: 24px;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(94,207,190,0.08) 0%, transparent 60%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* HEADER */
+    .header { text-align: center; margin-bottom: 28px; animation: fadeDown 0.7s ease both; z-index: 1; }
+    .logo-brand { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 6px; color: white; }
+    .logo-title { font-family: 'Bebas Neue', sans-serif; font-size: 48px; letter-spacing: 4px; color: var(--cream); line-height: 1; }
+    .logo-sub { font-size: 10px; letter-spacing: 4px; color: var(--teal); margin-top: 4px; text-transform: uppercase; }
+
+    /* CARD */
+    .card-wrap { z-index: 1; display: flex; flex-direction: column; align-items: center; }
+    .card-container { perspective: 1000px; width: min(80vw, 300px); aspect-ratio: 3/4; cursor: pointer; animation: fadeUp 0.7s 0.2s ease both; }
+    .card-inner { width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.7s cubic-bezier(0.4,0,0.2,1); border-radius: 20px; }
+    .card-inner.flipped { transform: rotateY(180deg); }
+    .card-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 20px; overflow: hidden; }
+    .card-back {
+      background: linear-gradient(135deg, #2a1f1a 0%, #1c1410 100%);
+      border: 2px solid rgba(94,207,190,0.25);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+    }
+    .card-back::after { content: ''; position: absolute; inset: 0; border-radius: 18px; border: 2px solid var(--teal); animation: borderPulse 2s infinite; }
+    .card-back-title { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 4px; color: var(--teal); opacity: 0.8; }
+    .tap-hint { font-size: 11px; letter-spacing: 3px; color: rgba(255,255,255,0.3); text-transform: uppercase; animation: pulse 2s infinite; }
+    .card-front { transform: rotateY(180deg); }
+    .card-front img { width: 100%; height: 100%; object-fit: cover; border-radius: 20px; }
+    .role-label { margin-top: 14px; font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 3px; text-align: center; opacity: 0; transform: translateY(8px); transition: all 0.4s 0.2s; z-index: 1; }
+    .role-label.show { opacity: 1; transform: translateY(0); }
+    .role-label.civil { color: var(--teal); }
+    .role-label.impostor { color: var(--red); }
+    .card-hint { margin-top: 10px; font-size: 11px; letter-spacing: 2px; color: rgba(255,255,255,0.25); text-transform: uppercase; text-align: center; opacity: 0; transition: opacity 0.4s 0.4s; z-index: 1; }
+    .card-hint.show { opacity: 1; }
+
+    /* NUEVA PARTIDA BUTTON */
+    #newGameBtn {
+      display: none;
+      margin-top: 18px;
+      padding: 14px 32px;
+      border-radius: 50px;
+      border: none;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      letter-spacing: 3px;
+      cursor: pointer;
+      background: var(--teal);
+      color: #1c1410;
+      box-shadow: 0 4px 24px rgba(94,207,190,0.35);
+      z-index: 1;
+      transition: transform 0.15s, opacity 0.3s;
+    }
+    #newGameBtn:active { transform: scale(0.97); }
+    #newGameBtn.show { display: block; }
+    #newGameBtn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+    #readyCount {
+      display: none;
+      margin-top: 8px;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase;
+      z-index: 1;
+    }
+    #readyCount.show { display: block; }
+
+    /* WAITING SCREEN */
+    #screen-wait { display: none; flex-direction: column; align-items: center; justify-content: center; position: fixed; inset: 0; z-index: 20; background: var(--bg); padding: 24px; }
+    #screen-wait.active { display: flex; }
+    .wait-title { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 3px; color: white; margin-bottom: 4px; }
+    .wait-sub { font-size: 12px; letter-spacing: 3px; color: rgba(255,255,255,0.4); text-transform: uppercase; margin-bottom: 20px; }
+    .count-big { font-family: 'Bebas Neue', sans-serif; font-size: 80px; color: var(--teal); line-height: 1; }
+    .count-label { font-size: 11px; letter-spacing: 3px; color: rgba(255,255,255,0.35); text-transform: uppercase; margin-bottom: 20px; }
+    .players-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 340px; margin-bottom: 24px; }
+    .player-chip { padding: 7px 14px; border-radius: 50px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; animation: popIn 0.3s ease both; }
+    .player-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); animation: pulse 2s infinite; }
+    .btn-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 8px; }
+    .btn { padding: 14px 32px; border-radius: 50px; border: none; font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 3px; cursor: pointer; transition: transform 0.15s, opacity 0.3s; min-width: 200px; }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-start { background: var(--teal); color: #1c1410; box-shadow: 0 4px 24px rgba(94,207,190,0.35); }
+    .btn-reset { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.15); }
+    .btn-reset:hover { background: rgba(212,43,43,0.2); color: var(--red); border-color: var(--red); }
+    .min-note { font-size: 11px; color: rgba(255,255,255,0.25); letter-spacing: 1px; }
+
+    /* NON-HOST WAITING */
+    #screen-nonhost { display: none; flex-direction: column; align-items: center; justify-content: center; position: fixed; inset: 0; z-index: 20; background: var(--bg); padding: 24px; }
+    #screen-nonhost.active { display: flex; }
+    .spinner { width: 48px; height: 48px; border: 3px solid rgba(94,207,190,0.15); border-top-color: var(--teal); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 24px; }
+
+    @keyframes fadeDown { from { opacity:0; transform:translateY(-16px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes popIn { from { opacity:0; transform:scale(0.7); } to { opacity:1; transform:scale(1); } }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.35; } }
+    @keyframes borderPulse { 0%,100; opacity:0.3; } 50% { opacity:0.8; } }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo-brand">ECOGEO</div>
+    <div class="logo-title">EL IMPOSTOR</div>
+    <div class="logo-sub">UN JUEGO DE ECOGEO</div>
+  </div>
+  <div class="card-wrap">
+    <div class="card-container" onclick="handleCardTap()">
+      <div class="card-inner" id="cardInner">
+        <div class="card-face card-back">
+          <div class="card-back-title">EL IMPOSTOR</div>
+          <div class="tap-hint">✦ TOCA PARA REVELAR ✦</div>
+        </div>
+        <div class="card-face card-front">
+          <img id="cardImage" src="" alt="Tu tarjeta">
+        </div>
+      </div>
+    </div>
+    <div class="role-label" id="roleLabel"></div>
+    <div class="card-hint" id="cardHint"></div>
+    <button id="newGameBtn" onclick="voteNewGame()">🔄 NUEVA PARTIDA</button>
+    <div id="readyCount"></div>
+  </div>
+
+  <!-- HOST WAITING ROOM -->
+  <div id="screen-wait">
+    <div class="wait-title">SALA DE JUEGO</div>
+    <div class="wait-sub">Tú eres el anfitrión 👑</div>
+    <div class="count-big" id="waitCount">1</div>
+    <div class="count-label">JUGADORES CONECTADOS</div>
+    <div class="players-grid" id="playersList"></div>
+    <div class="btn-row">
+      <button class="btn btn-start" id="startBtn" onclick="startGame()" disabled>INICIAR JUEGO</button>
+      <button class="btn btn-reset" onclick="resetGame()">RESETEAR</button>
+    </div>
+    <div class="min-note" id="minNote">Mínimo 2 jugadores para iniciar</div>
+  </div>
+
+  <!-- NON-HOST WAITING -->
+  <div id="screen-nonhost">
+    <div class="spinner"></div>
+    <div class="wait-title" style="font-size:24px;">ESPERANDO...</div>
+    <div class="wait-sub">El anfitrión iniciará el juego</div>
+    <div class="count-big" id="waitCountNH">1</div>
+    <div class="count-label">JUGADORES CONECTADOS</div>
+    <div class="players-grid" id="playersListNH"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const app = initializeApp({ databaseURL: "https://impostor-dd822-default-rtdb.europe-west1.firebasedatabase.app" });
+    const db = getDatabase(app);
+    const ROOM = 'room';
+
+    let myId = sessionStorage.getItem('myId');
+    if (!myId) { myId = 'p' + Date.now() + Math.random().toString(36).slice(2,5); sessionStorage.setItem('myId', myId); }
+
+    let isHost = false;
+    let flipped = false;
+    let assigned = null;
+    let countdownInterval = null;
+    let votedNewGame = false;
+    let totalPlayers = 0;
+
+    async function init() {
+      const roomRef = ref(db, ROOM);
+      const snap = await get(roomRef);
+      let room = snap.val();
+
+      if (!room || (Date.now() - (room.createdAt||0) > 7200000 && !room.started)) {
+        room = null;
+      }
+
+      if (!room) {
+        isHost = true;
+        await set(roomRef, {
+          hostId: myId,
+          started: false,
+          createdAt: Date.now(),
+          players: { [myId]: { joinedAt: Date.now(), num: 1 } }
+        });
+      } else if (!room.started) {
+        const playerCount = Object.keys(room.players || {}).length;
+        await update(ref(db, ROOM + '/players/' + myId), { joinedAt: Date.now(), num: playerCount + 1 });
+        isHost = (room.hostId === myId);
+      } else {
+        isHost = (room.hostId === myId);
+        assignCard(room);
+        return;
+      }
+
+      onValue(roomRef, (snapshot) => {
+        const data = snapshot.val();
+        if (!data) { location.reload(); return; }
+
+        totalPlayers = Object.keys(data.players || {}).length;
+
+        if (data.started) {
+          document.getElementById('screen-wait').classList.remove('active');
+          document.getElementById('screen-nonhost').classList.remove('active');
+          assignCard(data);
+
+          // Watch new game votes
+          const votes = Object.keys(data.newGameVotes || {}).length;
+          if (document.getElementById('readyCount').classList.contains('show')) {
+            document.getElementById('readyCount').textContent = votes + ' / ' + totalPlayers + ' LISTOS';
+          }
+
+          // All voted → host launches new round
+          if (votes >= totalPlayers && totalPlayers > 0 && isHost) {
+            launchNewRound();
+          }
+
+        } else {
+          // Room reset — clear card screen
+          if (flipped) { resetLocalState(); }
+          renderPlayers(data);
+          if (isHost || data.hostId === myId) {
+            document.getElementById('screen-nonhost').classList.remove('active');
+            document.getElementById('screen-wait').classList.add('active');
+          } else {
+            document.getElementById('screen-wait').classList.remove('active');
+            document.getElementById('screen-nonhost').classList.add('active');
+          }
+        }
+      });
+    }
+
+    function resetLocalState() {
+      flipped = false;
+      assigned = null;
+      votedNewGame = false;
+      if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+      document.getElementById('cardInner').classList.remove('flipped');
+      document.getElementById('roleLabel').classList.remove('show');
+      document.getElementById('cardHint').classList.remove('show');
+      document.getElementById('cardHint').textContent = '';
+      const btn = document.getElementById('newGameBtn');
+      btn.classList.remove('show');
+      btn.disabled = false;
+      btn.textContent = '🔄 NUEVA PARTIDA';
+      document.getElementById('readyCount').classList.remove('show');
+      document.getElementById('readyCount').textContent = '';
+    }
+
+    function renderPlayers(room) {
+      const players = Object.values(room.players || {});
+      const count = players.length;
+      totalPlayers = count;
+
+      ['waitCount', 'waitCountNH'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = count;
+      });
+
+      ['playersList', 'playersListNH'].forEach(id => {
+        const list = document.getElementById(id);
+        if (!list) return;
+        list.innerHTML = '';
+        players.sort((a,b) => a.joinedAt - b.joinedAt).forEach((p, i) => {
+          const chip = document.createElement('div');
+          chip.className = 'player-chip';
+          chip.innerHTML = '<span class="dot"></span>Jugador ' + (i+1) + (i === 0 ? ' 👑' : '');
+          list.appendChild(chip);
+        });
+      });
+
+      const btn = document.getElementById('startBtn');
+      if (btn) btn.disabled = count < 2;
+      const note = document.getElementById('minNote');
+      if (note) note.style.display = count >= 2 ? 'none' : 'block';
+    }
+
+    function assignCard(room) {
+      if (assigned) return; // Already assigned, don't reassign
+      const assignments = room.assignments || {};
+      const role = assignments[myId];
+      if (!role) { showCard(room.civilCard || 0, 'civil'); return; }
+      const cardIdx = role === 'impostor' ? 9 : (room.civilCard || 0);
+      showCard(cardIdx, role);
+    }
+
+    function showCard(cardIdx, role) {
+      assigned = { cardIdx, role };
+      document.getElementById('cardImage').src = CARDS[cardIdx];
+      document.getElementById('roleLabel').textContent = role === 'impostor' ? '⚠️ ERES EL IMPOSTOR' : '✅ ERES CIVIL';
+      document.getElementById('roleLabel').className = 'role-label ' + role;
+    }
+
+    window.voteNewGame = async function() {
+      if (votedNewGame) return;
+      votedNewGame = true;
+
+      const btn = document.getElementById('newGameBtn');
+      btn.disabled = true;
+      btn.textContent = '✅ LISTO';
+
+      const rc = document.getElementById('readyCount');
+      rc.classList.add('show');
+
+      // Save vote to Firebase
+      await update(ref(db, ROOM + '/newGameVotes'), { [myId]: true });
+
+      // Check if all voted
+      const snap = await get(ref(db, ROOM));
+      const data = snap.val();
+      const votes = Object.keys(data.newGameVotes || {}).length;
+      const total = Object.keys(data.players || {}).length;
+      rc.textContent = votes + ' / ' + total + ' LISTOS';
+
+      if (votes >= total && isHost) {
+        launchNewRound();
+      }
+    };
+
+    async function launchNewRound() {
+      const snap = await get(ref(db, ROOM));
+      const room = snap.val();
+      const playerIds = Object.keys(room.players || {});
+      if (playerIds.length < 2) return;
+
+      const impostorId = playerIds[Math.floor(Math.random() * playerIds.length)];
+      const civilCard = Math.floor(Math.random() * 9);
+      const assignments = {};
+      playerIds.forEach(id => { assignments[id] = id === impostorId ? 'impostor' : 'civil'; });
+
+      // Reset votes, keep players, new round
+      await update(ref(db, ROOM), { started: true, civilCard, assignments, newGameVotes: null });
+
+      // Reset local state so new card shows fresh
+      resetLocalState();
+    }
+
+    window.startGame = async function() {
+      const snap = await get(ref(db, ROOM));
+      const room = snap.val();
+      const playerIds = Object.keys(room.players || {});
+      if (playerIds.length < 2) return;
+
+      const impostorId = playerIds[Math.floor(Math.random() * playerIds.length)];
+      const civilCard = Math.floor(Math.random() * 9);
+      const assignments = {};
+      playerIds.forEach(id => { assignments[id] = id === impostorId ? 'impostor' : 'civil'; });
+
+      await update(ref(db, ROOM), { started: true, civilCard, assignments, newGameVotes: null });
+    };
+
+    window.resetGame = async function() {
+      if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+      await set(ref(db, ROOM), {
+        hostId: myId,
+        started: false,
+        createdAt: Date.now(),
+        players: { [myId]: { joinedAt: Date.now(), num: 1 } }
+      });
+      resetLocalState();
+    };
+
+    window.handleCardTap = function() {
+      if (!assigned) return;
+      if (flipped) {
+        // Second tap → go to ecogeo.es
+        window.location.href = 'https://www.ecogeo.es/';
+        return;
+      }
+      flipped = true;
+      document.getElementById('cardInner').classList.add('flipped');
+      setTimeout(() => {
+        document.getElementById('roleLabel').classList.add('show');
+        document.getElementById('cardHint').classList.add('show');
+        startCountdown();
+      }, 700);
+    };
+
+    function startCountdown() {
+      let secs = 30;
+      const hint = document.getElementById('cardHint');
+      hint.textContent = 'Toca de nuevo para ir a ECOGEO · ' + secs + 's';
+
+      countdownInterval = setInterval(() => {
+        secs--;
+        if (secs <= 0) {
+          clearInterval(countdownInterval);
+          countdownInterval = null;
+          hint.textContent = 'Toca para ir a ECOGEO';
+          // Show nueva partida button to everyone
+          document.getElementById('newGameBtn').classList.add('show');
+          document.getElementById('readyCount').classList.add('show');
+          document.getElementById('readyCount').textContent = '0 / ' + totalPlayers + ' LISTOS';
+        } else {
+          hint.textContent = 'Toca de nuevo para ir a ECOGEO · ' + secs + 's';
+        }
+      }, 1000);
+    }
+
+    init();
+  </script>
+</body>
+</html>
