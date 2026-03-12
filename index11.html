@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>EL IMPOSTOR!! — ECOGEO</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #F5F0E8;
+  --dark: #2C2416;
+  --teal: #5BBFB5;
+  --red: #D42B3A;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: #0d0d0d;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.screen {
+  display: none;
+  width: 100%;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 20px;
+  animation: fadeIn 0.45s ease;
+}
+.screen.active { display: flex; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── WAITING ── */
+#s-wait { background: radial-gradient(ellipse at 50% -10%, #142424 0%, #0a0f0f 70%); }
+
+.logo-area { text-align:center; margin-bottom:28px; }
+.logo-wm {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:2.8rem; letter-spacing:6px; color:var(--cream);
+}
+.logo-wm .g { color:var(--teal); }
+.logo-sub { font-size:0.65rem; letter-spacing:4px; text-transform:uppercase; color:#556; margin-top:2px; }
+
+.panel {
+  background:var(--cream);
+  border-radius:24px;
+  padding:24px 20px 20px;
+  width:100%; max-width:360px;
+  box-shadow:0 24px 64px rgba(0,0,0,0.7), 0 0 0 4px var(--teal);
+}
+.panel-title {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.8rem; letter-spacing:3px;
+  color:var(--dark); text-align:center; margin-bottom:10px;
+}
+.room-pill {
+  background:var(--dark); color:var(--teal);
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.25rem; letter-spacing:7px;
+  text-align:center; padding:9px 0;
+  border-radius:10px; margin-bottom:16px;
+}
+.p-label { font-size:0.65rem; letter-spacing:3px; text-transform:uppercase; color:#888; text-align:center; margin-bottom:10px; }
+.slots { display:flex; gap:7px; justify-content:center; margin-bottom:8px; }
+.slot {
+  width:46px; height:46px; border-radius:50%;
+  border:2px dashed #ccc;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.2rem; background:#fff;
+  transition:all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+}
+.slot.on { border:2.5px solid var(--teal); background:var(--teal); }
+.slot.me { border-color:var(--dark); background:var(--dark); }
+.slot-cnt { text-align:center; font-size:0.82rem; color:#666; margin-bottom:12px; }
+.slot-cnt b { color:var(--dark); }
+.conn-row {
+  display:flex; align-items:center; justify-content:center;
+  gap:6px; font-size:0.65rem; letter-spacing:2px;
+  text-transform:uppercase; color:#888; margin-bottom:14px;
+}
+.cdot { width:7px; height:7px; border-radius:50%; background:#ccc; }
+.cdot.on { background:#4CAF50; animation:dp 2s infinite; }
+@keyframes dp { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.btn {
+  display:block; width:100%; padding:13px;
+  border:none; border-radius:13px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.25rem; letter-spacing:3px;
+  cursor:pointer; transition:all 0.2s; margin-bottom:8px;
+}
+.btn:active { transform:scale(0.97); }
+.btn:last-child { margin-bottom:0; }
+.btn-dk { background:var(--dark); color:var(--cream); }
+.btn-dk:hover { background:#3d3020; }
+.btn-dk:disabled { background:#ccc; color:#aaa; cursor:not-allowed; transform:none; }
+.btn-ol { background:transparent; border:2px solid var(--dark); color:var(--dark); font-size:1rem; padding:10px; }
+
+.qr-wrap { margin-top:16px; padding-top:14px; border-top:1px solid #e0dbd0; text-align:center; }
+.qr-wrap .ql { font-size:0.65rem; letter-spacing:3px; text-transform:uppercase; color:#888; margin-bottom:10px; }
+#qr-img { border-radius:10px; border:3px solid #fff; box-shadow:0 4px 14px rgba(0,0,0,0.1); }
+
+/* ── CARD ── */
+#s-card { background:#111; gap:14px; }
+
+.t-track { position:fixed; top:0; left:0; right:0; height:5px; background:rgba(255,255,255,0.07); z-index:50; }
+.t-fill { height:100%; background:var(--teal); transition:width 1s linear, background 0.5s; }
+.t-num {
+  position:fixed; top:10px; right:14px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:2rem; color:#fff; z-index:51;
+  text-shadow:0 2px 10px rgba(0,0,0,0.5);
+}
+
+.game-card {
+  width:88%; max-width:328px;
+  background:var(--cream);
+  border-radius:22px;
+  border:5px solid var(--teal);
+  overflow:hidden;
+  box-shadow:0 40px 100px rgba(0,0,0,0.9);
+  cursor:pointer;
+  transition:transform 0.15s;
+  animation:cIn 0.65s cubic-bezier(0.175,0.885,0.32,1.275);
+}
+.game-card:active { transform:scale(0.97); }
+@keyframes cIn {
+  0%{transform:scale(0.4) rotate(-8deg);opacity:0}
+  100%{transform:scale(1) rotate(0);opacity:1}
+}
+.gc-top { padding:22px 18px 14px; text-align:center; }
+.gc-wm { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:5px; color:var(--dark); }
+.gc-wm .g { color:var(--teal); }
+.gc-banner { padding:13px 18px; background:var(--teal); text-align:center; }
+.gc-banner h2 { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:3px; color:#fff; }
+.gc-body { padding:18px 18px 12px; }
+.gc-wlabel { font-size:0.68rem; letter-spacing:3px; text-transform:uppercase; color:#777; font-weight:700; text-align:center; }
+.gc-word { font-family:'Bebas Neue',sans-serif; font-size:2.1rem; color:var(--red); letter-spacing:4px; text-align:center; margin:6px 0 14px; line-height:1; }
+.gc-rules { font-size:0.7rem; line-height:1.65; color:#444; text-transform:uppercase; letter-spacing:0.5px; text-align:justify; }
+.gc-rules .hl { color:var(--red); font-weight:700; }
+.gc-foot { padding:12px 18px 22px; text-align:center; }
+.gc-vamos { font-family:'Bebas Neue',sans-serif; font-size:1.9rem; letter-spacing:4px; color:var(--dark); }
+
+.tap-hint { color:rgba(255,255,255,0.4); font-size:0.7rem; letter-spacing:2px; text-transform:uppercase; animation:ph 2s ease-in-out infinite; }
+@keyframes ph { 0%,100%{opacity:0.4} 50%{opacity:0.9} }
+
+.btn-ghost {
+  max-width:280px;
+  background:transparent;
+  border:2px solid rgba(255,255,255,0.25);
+  color:rgba(255,255,255,0.6);
+  font-size:0.85rem; letter-spacing:1px;
+  padding:10px 22px; border-radius:50px;
+  cursor:pointer; transition:all 0.2s;
+}
+.btn-ghost:hover { border-color:rgba(255,255,255,0.55); color:#fff; }
+.btn-ghost:active { transform:scale(0.97); }
+
+/* Toast */
+.toast {
+  position:fixed; bottom:26px;
+  left:50%; transform:translateX(-50%) translateY(70px);
+  background:var(--dark); color:#fff;
+  padding:11px 22px; border-radius:50px;
+  font-size:0.82rem; font-weight:500; letter-spacing:0.5px;
+  z-index:999; white-space:nowrap;
+  transition:transform 0.3s ease;
+  box-shadow:0 8px 24px rgba(0,0,0,0.4);
+}
+.toast.show { transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- WAITING ROOM -->
+<div id="s-wait" class="screen active">
+  <div class="logo-area">
+    <div class="logo-wm">ECO<span class="g">G</span>EO</div>
+    <div class="logo-sub">El Impostor · Sala Multijugador</div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Sala de Espera</div>
+    <div class="room-pill" id="room-id-el">···</div>
+    <div class="p-label">Jugadores conectados</div>
+    <div class="slots" id="slots-el">
+      <div class="slot">👤</div><div class="slot">👤</div>
+      <div class="slot">👤</div><div class="slot">👤</div>
+      <div class="slot">👤</div><div class="slot">👤</div>
+    </div>
+    <div class="slot-cnt"><b id="cnt-el">0</b> / 6 jugadores</div>
+    <div class="conn-row">
+      <div class="cdot" id="cdot-el"></div>
+      <span id="ctext-el">Conectando...</span>
+    </div>
+    <button class="btn btn-dk" id="btn-start" disabled>🎮 Empezar partida</button>
+    <button class="btn btn-ol" id="btn-reset">🔄 Nueva partida</button>
+    <div class="qr-wrap">
+      <div class="ql">Escanea para unirte</div>
+      <img id="qr-img" width="150" height="150" src="" alt="QR Code">
+    </div>
+  </div>
+</div>
+
+<!-- CARD -->
+<div id="s-card" class="screen">
+  <div class="t-track"><div class="t-fill" id="t-fill"></div></div>
+  <div class="t-num" id="t-num">20</div>
+  <div class="game-card" id="game-card" onclick="goWeb()">
+    <div class="gc-top">
+      <div class="gc-wm">ECO<span class="g">G</span>EO</div>
+    </div>
+    <div class="gc-banner" id="gc-banner"><h2>EL IMPOSTOR!!</h2></div>
+    <div class="gc-body">
+      <div class="gc-wlabel" id="gc-wlabel">TU PALABRA ES:</div>
+      <div class="gc-word" id="gc-word">—</div>
+      <p class="gc-rules" id="gc-rules">
+        EN EL GRUPO TODOS CONOCEIS LA PALABRA, SALVO 1 DE ELLOS,
+        <span class="hl">EL IMPOSTOR,</span> DEBES DECIR PALABRAS
+        RELACIONADAS CON LA QUE TE HA TOCADO SIN DARLE MUCHAS
+        PISTAS AL IMPOSTOR PARA QUE NO LO ADIVINE.
+      </p>
+    </div>
+    <div class="gc-foot"><div class="gc-vamos">VAMOS!!</div></div>
+  </div>
+  <div class="tap-hint">Toca la carta para ir a ecogeo.es</div>
+  <button class="btn-ghost" id="btn-back">← Volver a la sala</button>
+</div>
+
+<div class="toast" id="toast-el"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════
+const ROOM = "ECOGEO";
+const SECS = 20;
+const EMOJIS = ["🎯","🔥","⚡","🌟","🎭","🎪"];
+const CARDS = [
+  {word:"DRON",           color:"#5BBFB5"},
+  {word:"REDES SOCIALES", color:"#2ECC40"},
+  {word:"PERSPECTIVA",    color:"#F5A623"},
+  {word:"GUIÓN",          color:"#111111"},
+  {word:"MICRÓFONO",      color:"#8CC665"},
+  {word:"JEFE",           color:"#3A9BD5"},
+  {word:"360",            color:"#FF69B4"},
+  {word:"SEGUIDORES RRSS",color:"#5BBFB5"},
+  {word:"CÁMARA",         color:"#6B47DC"},
+];
+
+// ═══════════════════════════════════════════════════
+// PLAYER ID
+// ═══════════════════════════════════════════════════
+const myId = sessionStorage.getItem("_eid") || ("p" + Math.random().toString(36).slice(2,10));
+sessionStorage.setItem("_eid", myId);
+
+// ═══════════════════════════════════════════════════
+// STATE (localStorage + BroadcastChannel)
+// Cross-device: uses a shared API
+// ═══════════════════════════════════════════════════
+let timerInt = null;
+let myAss = null;
+let pollInt = null;
+let lastSeen = 0;
+
+function defState() {
+  return {gameState:"waiting", players:{}, assignments:{}, ts:0};
+}
+function lsGet() {
+  try { return JSON.parse(localStorage.getItem("_eg")||"null") || defState(); }
+  catch { return defState(); }
+}
+function lsSet(d) { localStorage.setItem("_eg", JSON.stringify(d)); }
+
+const bc = typeof BroadcastChannel!=="undefined" ? new BroadcastChannel("ecogeo_imp") : null;
+
+// Use a shared REST store for real cross-device sync
+// jsonbin.io public bin - anyone with the URL can read/write
+const BIN = "6820000000000000000demo"; // placeholder - will use localStorage fallback
+let useRemote = false;
+
+async function remoteGet() {
+  // Try to fetch from a shared endpoint
+  // Using a public CORS-friendly key-value store
+  const r = await fetch("https://kvdb.io/A7mHPSVs8kgRjn8YvEsXtB/ecogeo_game", {
+    cache:"no-cache"
+  });
+  if (!r.ok) throw new Error("remote fetch fail");
+  const txt = await r.text();
+  return txt ? JSON.parse(txt) : defState();
+}
+
+async function remoteSet(d) {
+  await fetch("https://kvdb.io/A7mHPSVs8kgRjn8YvEsXtB/ecogeo_game", {
+    method:"POST",
+    body: JSON.stringify(d)
+  });
+}
+
+async function getS() {
+  if (useRemote) {
+    try { return await remoteGet(); }
+    catch { useRemote = false; }
+  }
+  return lsGet();
+}
+
+async function setS(d) {
+  d.ts = Date.now();
+  lsSet(d);
+  bc && bc.postMessage({t:"u"});
+  if (useRemote) {
+    try { await remoteSet(d); } catch { useRemote = false; }
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════
+async function boot() {
+  // Try remote
+  try {
+    const rs = await remoteGet();
+    if (rs) { useRemote = true; lsSet(rs); }
+  } catch { useRemote = false; }
+
+  // Setup QR
+  const url = location.href.split("?")[0];
+  document.getElementById("qr-img").src =
+    `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(url)}&bgcolor=F5F0E8&color=2C2416&margin=8`;
+  document.getElementById("room-id-el").textContent = ROOM;
+
+  // Join
+  let s = await getS();
+  if (!s.players) s.players = {};
+  s.players[myId] = {j:Date.now()};
+  await setS(s);
+
+  setConn(true);
+  render(s);
+
+  // Poll
+  pollInt = setInterval(async () => {
+    const s2 = await getS();
+    if (s2.ts !== lastSeen) { lastSeen = s2.ts; render(s2); }
+  }, 2500);
+
+  if (bc) bc.onmessage = async () => { const s2 = await getS(); render(s2); };
+
+  // On leave
+  window.addEventListener("beforeunload", () => {
+    clearInterval(pollInt);
+    const s2 = lsGet();
+    if (s2.players) delete s2.players[myId];
+    lsSet(s2);
+    bc && bc.postMessage({t:"u"});
+    if (useRemote) {
+      try { navigator.sendBeacon("https://kvdb.io/A7mHPSVs8kgRjn8YvEsXtB/ecogeo_game", JSON.stringify(s2)); } catch {}
+    }
+  });
+
+  // Buttons
+  document.getElementById("btn-start").onclick = doStart;
+  document.getElementById("btn-reset").onclick = doReset;
+  document.getElementById("btn-back").onclick = doBack;
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════
+function render(s) {
+  const pids = s.players ? Object.keys(s.players) : [];
+  const n = pids.length;
+
+  document.getElementById("cnt-el").textContent = n;
+  document.getElementById("btn-start").disabled = n < 2;
+
+  const slots = document.querySelectorAll(".slot");
+  slots.forEach((el, i) => {
+    el.className = "slot";
+    el.textContent = "👤";
+    if (i < n) {
+      el.classList.add("on");
+      el.textContent = EMOJIS[i]||"👤";
+      if (pids[i] === myId) el.classList.add("me");
+    }
+  });
+
+  if (s.gameState === "playing" && s.assignments && s.assignments[myId]) {
+    const cur = document.querySelector(".screen.active");
+    if (cur && cur.id === "s-wait") {
+      myAss = s.assignments[myId];
+      showCard(myAss);
+    }
+  }
+}
+
+function setConn(on) {
+  document.getElementById("cdot-el").className = "cdot" + (on?" on":"");
+  document.getElementById("ctext-el").textContent = on ? (useRemote?"Online":"Local") : "Sin conexión";
+}
+
+// ═══════════════════════════════════════════════════
+// GAME ACTIONS
+// ═══════════════════════════════════════════════════
+async function doStart() {
+  const s = await getS();
+  const pids = s.players ? Object.keys(s.players) : [];
+  if (pids.length < 2) { toast("Necesitas al menos 2 jugadores"); return; }
+
+  const card = CARDS[Math.floor(Math.random() * CARDS.length)];
+  const impIdx = Math.floor(Math.random() * pids.length);
+  const asgn = {};
+  pids.forEach((pid, i) => {
+    asgn[pid] = {word:card.word, color:card.color, isImpostor: i===impIdx};
+  });
+
+  s.gameState = "playing";
+  s.assignments = asgn;
+  await setS(s);
+  toast("¡La partida empieza! 🎮");
+}
+
+async function doReset() {
+  const s = await getS();
+  s.gameState = "waiting";
+  s.assignments = {};
+  await setS(s);
+  myAss = null;
+  if (timerInt) { clearInterval(timerInt); timerInt = null; }
+  showScreen("s-wait");
+  toast("Sala reiniciada ✅");
+}
+
+async function doBack() {
+  showScreen("s-wait");
+  if (timerInt) { clearInterval(timerInt); timerInt = null; }
+  const s2 = await getS();
+  render(s2);
+}
+
+// ═══════════════════════════════════════════════════
+// CARD
+// ═══════════════════════════════════════════════════
+function showCard(a) {
+  const {word, color, isImpostor} = a;
+
+  const card = document.getElementById("game-card");
+  const banner = document.getElementById("gc-banner");
+  const wlabel = document.getElementById("gc-wlabel");
+  const gword = document.getElementById("gc-word");
+  const grules = document.getElementById("gc-rules");
+
+  const c = isImpostor ? "#D42B3A" : color;
+  card.style.borderColor = c;
+  banner.style.background = c;
+
+  if (isImpostor) {
+    wlabel.textContent = "ERES EL IMPOSTOR";
+    wlabel.style.cssText = "font-size:1rem;letter-spacing:2px;text-transform:uppercase;color:#D42B3A;font-weight:700;text-align:center";
+    gword.style.display = "none";
+    grules.innerHTML = `EN EL GRUPO TODOS CONOCEN LA PALABRA, SALVO 1 DE ELLOS,
+      <span class="hl">EL IMPOSTOR,</span> DEBES DECIR PALABRAS RELACIONADAS
+      CON LAS QUE DIGAN TUS COMPAÑEROS PARA QUE NO TE DESCUBRAN.
+      INTENTA ADIVINAR LA PALABRA Y GANARÁS!!`;
+  } else {
+    wlabel.textContent = "TU PALABRA ES:";
+    wlabel.style.cssText = "font-size:0.68rem;letter-spacing:3px;text-transform:uppercase;color:#777;font-weight:700;text-align:center";
+    gword.style.display = "block";
+    gword.textContent = word;
+    grules.innerHTML = `EN EL GRUPO TODOS CONOCEIS LA PALABRA, SALVO 1 DE ELLOS,
+      <span class="hl">EL IMPOSTOR,</span> DEBES DECIR PALABRAS RELACIONADAS
+      CON LA QUE TE HA TOCADO SIN DARLE MUCHAS PISTAS AL IMPOSTOR PARA QUE NO LO ADIVINE.`;
+  }
+
+  showScreen("s-card");
+  runTimer();
+}
+
+function runTimer() {
+  if (timerInt) clearInterval(timerInt);
+  let rem = SECS;
+  const fill = document.getElementById("t-fill");
+  const num = document.getElementById("t-num");
+
+  fill.style.width = "100%";
+  fill.style.background = "#5BBFB5";
+  num.style.color = "#fff";
+  num.textContent = rem;
+
+  timerInt = setInterval(() => {
+    rem--;
+    num.textContent = rem;
+    fill.style.width = ((rem/SECS)*100)+"%";
+    if (rem <= 5) {
+      fill.style.background = "#D42B3A";
+      num.style.color = "#D42B3A";
+    }
+    if (rem <= 0) {
+      clearInterval(timerInt);
+      timerInt = null;
+      goWeb();
+    }
+  }, 1000);
+}
+
+// ═══════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+function toast(msg) {
+  const t = document.getElementById("toast-el");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(t._t);
+  t._t = setTimeout(()=>t.classList.remove("show"), 2800);
+}
+function goWeb() { window.location.href = "https://www.ecogeo.es"; }
+window.goWeb = goWeb;
+
+// ── Start ─────────────────────────────────────────
+boot().catch(e=>{
+  console.error(e);
+  document.getElementById("room-id-el").textContent = ROOM;
+  document.getElementById("qr-img").src =
+    `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(location.href)}&bgcolor=F5F0E8&color=2C2416&margin=8`;
+  setConn(false);
+  toast("Modo sin conexión — solo local");
+  const s = defState();
+  s.players[myId] = {j:Date.now()};
+  lsSet(s);
+  render(s);
+  document.getElementById("btn-start").onclick = () => toast("Abre en otra pestaña para probar");
+  document.getElementById("btn-reset").onclick = () => {
+    lsSet(defState()); showScreen("s-wait"); toast("Reiniciado");
+  };
+  document.getElementById("btn-back").onclick = () => showScreen("s-wait");
+});
+</script>
+</body>
+</html>
